@@ -1,0 +1,39 @@
+name: 記事自動投稿
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'articles/topics.txt'  # トピックファイル更新時に投稿
+  workflow_dispatch:            # 手動実行も可能
+    inputs:
+      force_post:
+        description: '強制的に記事を投稿する'
+        required: false
+        default: 'false'
+
+jobs:
+  post-article:
+    name: Claude AIで記事生成・note.com投稿
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: 記事を生成してnote.comに投稿
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTE_EMAIL: ${{ secrets.NOTE_EMAIL }}
+          NOTE_PASSWORD: ${{ secrets.NOTE_PASSWORD }}
+        run: python scripts/generate_and_post.py
