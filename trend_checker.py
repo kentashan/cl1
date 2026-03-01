@@ -5,12 +5,12 @@ import urllib.request
 import urllib.error
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def fetch_github_trending(language="", since="daily"):
     """
-    Fetch trending repositories from GitHub.
+    Fetch trending repositories using GitHub Search API.
 
     Args:
         language: Programming language filter (e.g., "python", "javascript"). Empty for all.
@@ -19,91 +19,38 @@ def fetch_github_trending(language="", since="daily"):
     Returns:
         List of trending repository info dicts
     """
-    url = f"https://github.com/trending/{language}?since={since}"
+    days = {"daily": 1, "weekly": 7, "monthly": 30}.get(since, 1)
+    date_from = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+    query = f"created:>{date_from}"
+    if language:
+        query += f"+language:{language}"
+
+    url = (
+        f"https://api.github.com/search/repositories"
+        f"?q={query}&sort=stars&order=desc&per_page=20"
+    )
     headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; TrendChecker/1.0)",
-        "Accept": "text/html",
+        "User-Agent": "TrendChecker/1.0",
+        "Accept": "application/vnd.github.v3+json",
     }
 
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
-            html = response.read().decode("utf-8")
+            data = json.loads(response.read())
     except urllib.error.URLError as e:
         print(f"Error fetching trends: {e}")
         return []
 
-    return parse_trending(html)
-
-
-def parse_trending(html):
-    """Parse trending repositories from HTML."""
     repos = []
-
-    # Split by article tags which contain each repo
-    parts = html.split('<article class="Box-row">')
-    for part in parts[1:]:
-        repo = {}
-
-        # Extract repo name (owner/name)
-        if 'href="/' in part:
-            start = part.find('href="/') + len('href="/')
-            end = part.find('"', start)
-            full_name = part[start:end]
-            if "/" in full_name and len(full_name.split("/")) == 2:
-                repo["full_name"] = full_name
-                parts_name = full_name.split("/")
-                repo["owner"] = parts_name[0]
-                repo["name"] = parts_name[1]
-
-        if not repo.get("full_name"):
-            continue
-
-        # Extract description
-        if "<p " in part:
-            desc_start = part.find("<p ")
-            desc_end_tag = part.find("</p>", desc_start)
-            desc_section = part[desc_start:desc_end_tag]
-            # Remove HTML tags
-            clean = ""
-            in_tag = False
-            for ch in desc_section:
-                if ch == "<":
-                    in_tag = True
-                elif ch == ">":
-                    in_tag = False
-                elif not in_tag:
-                    clean += ch
-            repo["description"] = clean.strip()
-        else:
-            repo["description"] = ""
-
-        # Extract star count from "stars today" or total stars
-        if "star-icon" in part or "octicon-star" in part:
-            # Try to find total stars
-            star_idx = part.find("octicon-star")
-            if star_idx != -1:
-                after_star = part[star_idx:]
-                # Find the number after the star icon
-                num_start = after_star.find(">", after_star.find("</svg>")) + 1
-                num_end = after_star.find("<", num_start)
-                star_text = after_star[num_start:num_end].strip().replace(",", "")
-                try:
-                    repo["stars"] = int(star_text)
-                except ValueError:
-                    repo["stars"] = 0
-
-        # Extract language
-        if 'itemprop="programmingLanguage"' in part:
-            lang_start = part.find('itemprop="programmingLanguage">')
-            lang_start += len('itemprop="programmingLanguage">')
-            lang_end = part.find("<", lang_start)
-            repo["language"] = part[lang_start:lang_end].strip()
-        else:
-            repo["language"] = ""
-
-        repos.append(repo)
-
+    for item in data.get("items", []):
+        repos.append({
+            "full_name": item["full_name"],
+            "description": item.get("description") or "",
+            "language": item.get("language") or "",
+            "stars": item.get("stargazers_count", 0),
+        })
     return repos
 
 
@@ -122,7 +69,7 @@ def display_trends(repos, since="daily"):
     print(f"  Fetched at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*60}\n")
 
-    for i, repo in enumerate(repos[:20], 1):
+    for i, repo in enumerate(repos, 1):
         print(f"{i:2}. {repo.get('full_name', 'Unknown')}")
         if repo.get("description"):
             desc = repo["description"]
