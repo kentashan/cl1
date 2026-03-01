@@ -3,9 +3,16 @@
 
 import urllib.request
 import urllib.error
+import urllib.parse
 import json
 import sys
 from datetime import datetime, timedelta
+
+SINCE_CONFIG = {
+    "daily":   {"days": 1,  "label": "Today"},
+    "weekly":  {"days": 7,  "label": "This Week"},
+    "monthly": {"days": 30, "label": "This Month"},
+}
 
 
 def fetch_github_trending(language="", since="daily"):
@@ -19,12 +26,12 @@ def fetch_github_trending(language="", since="daily"):
     Returns:
         List of trending repository info dicts
     """
-    days = {"daily": 1, "weekly": 7, "monthly": 30}.get(since, 1)
+    days = SINCE_CONFIG.get(since, SINCE_CONFIG["daily"])["days"]
     date_from = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
     query = f"created:>{date_from}"
     if language:
-        query += f"+language:{language}"
+        query += f"+language:{urllib.parse.quote(language, safe='')}"
 
     url = (
         f"https://api.github.com/search/repositories"
@@ -38,52 +45,54 @@ def fetch_github_trending(language="", since="daily"):
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
-            data = json.loads(response.read())
+            data = json.load(response)
     except urllib.error.URLError as e:
         print(f"Error fetching trends: {e}")
-        return []
+        return None
 
-    repos = []
-    for item in data.get("items", []):
-        repos.append({
+    return [
+        {
             "full_name": item["full_name"],
             "description": item.get("description") or "",
             "language": item.get("language") or "",
             "stars": item.get("stargazers_count", 0),
-        })
-    return repos
+        }
+        for item in data.get("items", [])
+    ]
 
 
-def display_trends(repos, since="daily"):
+def display_trends(repos, since="daily", fetched_at=None):
     """Display trending repositories in a formatted way."""
+    if repos is None:
+        return
+
     if not repos:
         print("No trending repositories found.")
         return
 
-    since_label = {"daily": "Today", "weekly": "This Week", "monthly": "This Month"}.get(
-        since, since
-    )
+    since_label = SINCE_CONFIG.get(since, {}).get("label", since)
+    timestamp = (fetched_at or datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
 
     print(f"\n{'='*60}")
     print(f"  GitHub Trending Repositories - {since_label}")
-    print(f"  Fetched at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  Fetched at: {timestamp}")
     print(f"{'='*60}\n")
 
     for i, repo in enumerate(repos, 1):
-        print(f"{i:2}. {repo.get('full_name', 'Unknown')}")
-        if repo.get("description"):
-            desc = repo["description"]
+        print(f"{i:2}. {repo['full_name']}")
+        desc = repo["description"]
+        if desc:
             if len(desc) > 80:
                 desc = desc[:77] + "..."
             print(f"    {desc}")
         info_parts = []
-        if repo.get("language"):
+        if repo["language"]:
             info_parts.append(f"Language: {repo['language']}")
-        if repo.get("stars"):
+        if repo["stars"]:
             info_parts.append(f"Stars: {repo['stars']:,}")
         if info_parts:
             print(f"    {' | '.join(info_parts)}")
-        print(f"    https://github.com/{repo.get('full_name', '')}")
+        print(f"    https://github.com/{repo['full_name']}")
         print()
 
 
@@ -114,9 +123,10 @@ def main():
             print("  python trend_checker.py --lang=python --daily")
             return
 
-    print(f"Fetching GitHub trending repositories...")
+    print("Fetching GitHub trending repositories...")
+    fetched_at = datetime.now()
     repos = fetch_github_trending(language=language, since=since)
-    display_trends(repos, since=since)
+    display_trends(repos, since=since, fetched_at=fetched_at)
 
 
 if __name__ == "__main__":
