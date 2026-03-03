@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # 手動実行も可能
 
 permissions:
-  contents: write  # trends.json をコミット・プッシュするために必要
+  contents: write  # trends.json / music_trends.json をコミット・プッシュするために必要
 
 jobs:
   fetch-trends:
@@ -30,11 +30,14 @@ jobs:
       - name: Fetch Japan trends
         run: python fetch_trends.py
 
+      - name: Fetch Japan music trends
+        run: python fetch_music_trends.py
+
       - name: Commit and push updated trends
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add trends.json
+          git add trends.json music_trends.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
