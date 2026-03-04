@@ -29,6 +29,9 @@ jobs:
 
       - name: Fetch Japan trends
         run: python fetch_trends.py
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
 
       - name: Commit and push updated trends
         run: |

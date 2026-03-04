@@ -12,6 +12,8 @@ import requests
 
 OUTPUT_FILE = "trends.json"
 TRENDING_URL = "https://trends.google.com/trends/api/dailytrends"
+NOTION_API_URL = "https://api.notion.com/v1/pages"
+NOTION_VERSION = "2022-06-28"
 
 
 def fetch_japan_trends() -> list[dict]:
@@ -65,6 +67,39 @@ def fetch_japan_trends() -> list[dict]:
     return results
 
 
+def push_to_notion(trends: list[dict], token: str, database_id: str) -> None:
+    """Push today's trends to a Notion database."""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": NOTION_VERSION,
+        "Content-Type": "application/json",
+    }
+    success = 0
+    for item in trends:
+        # Convert "20240301" -> "2024-03-01"
+        date_iso = f"{item['date'][:4]}-{item['date'][4:6]}-{item['date'][6:]}"
+        sources = [
+            {"name": a["source"]}
+            for a in item["articles"]
+            if a.get("source")
+        ]
+        payload = {
+            "parent": {"database_id": database_id},
+            "properties": {
+                "名前": {"title": [{"text": {"content": item["query"]}}]},
+                "日付": {"date": {"start": date_iso}},
+                "マルチセレクト": {"multi_select": sources},
+                "ステータス": {"status": {"name": "未着手"}},
+            },
+        }
+        resp = requests.post(NOTION_API_URL, json=payload, headers=headers, timeout=30)
+        if resp.status_code == 200:
+            success += 1
+        else:
+            print(f"  [WARN] Failed to push '{item['query']}': {resp.status_code} {resp.text[:100]}")
+    print(f"Pushed {success}/{len(trends)} trends to Notion.")
+
+
 def load_existing(path: str) -> dict:
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
@@ -96,6 +131,16 @@ def main() -> None:
 
     save(OUTPUT_FILE, data)
     print(f"Saved {len(trends)} trends for {today} -> {OUTPUT_FILE}")
+
+    # Push to Notion if credentials are set
+    notion_token = os.environ.get("NOTION_TOKEN")
+    notion_db = os.environ.get("NOTION_DATABASE_ID")
+    if notion_token and notion_db:
+        today_trends = [t for t in trends if t["date"] == today.replace("-", "")]
+        print(f"\nPushing {len(today_trends)} trends to Notion...")
+        push_to_notion(today_trends, notion_token, notion_db)
+    else:
+        print("\nNOTION_TOKEN / NOTION_DATABASE_ID not set, skipping Notion push.")
 
     # Print top 10 to stdout for workflow logs
     print("\nTop 10 trends today:")
