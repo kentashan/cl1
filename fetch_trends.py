@@ -10,8 +10,6 @@ from datetime import datetime, timezone
 
 import requests
 
-JST = timezone.utc  # stored as UTC, displayed note says JST+9
-
 OUTPUT_FILE = "trends.json"
 TRENDING_URL = "https://trends.google.com/trends/api/dailytrends"
 
@@ -43,7 +41,7 @@ def fetch_japan_trends() -> list[dict]:
     results = []
     for day in trending_searches:
         date_str = day["date"]  # e.g. "20240301"
-        for item in day["trendingSearches"]:
+        for rank, item in enumerate(day["trendingSearches"], start=1):
             title = item["title"]["query"]
             traffic = item.get("formattedTraffic", "N/A")
             articles = [
@@ -57,7 +55,7 @@ def fetch_japan_trends() -> list[dict]:
             results.append(
                 {
                     "date": date_str,
-                    "rank": len(results) + 1,
+                    "rank": rank,
                     "query": title,
                     "traffic": traffic,
                     "articles": articles,
