@@ -1,0 +1,35 @@
+name: Daily Japan Music Trends
+
+on:
+  schedule:
+    # 毎日 JST 08:00 (UTC 23:00 前日) に実行
+    - cron: "0 23 * * *"
+  workflow_dispatch:  # 手動実行も可能
+
+permissions:
+  contents: read  # Notionへの書き込みのみのためreadで十分
+
+jobs:
+  fetch-music-trends:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch Japan music trends and save to Notion
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python fetch_music_trends.py
