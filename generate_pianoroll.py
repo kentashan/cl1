@@ -14,7 +14,7 @@ FRAME_HEIGHT = 200
 TIME_OFFSET = 0.0
 
 CURSOR_X = 0.20       # カーソル固定位置（左20%）
-PPS = 100             # pixels per second
+PPS = 400             # pixels per second
 
 NOTE_MIN = 36
 NOTE_MAX = 84
@@ -140,7 +140,7 @@ for frame_idx in range(total_frames):
 
         y_ratio = (note - NOTE_MIN) / NOTE_RANGE
         y_center = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12
-        h = 20
+        h = 80
 
         is_active = start_sec <= current_time <= end_sec
         color = pitch_color(note, is_active)
