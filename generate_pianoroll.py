@@ -13,8 +13,7 @@ FRAME_WIDTH = 786
 FRAME_HEIGHT = 200
 TIME_OFFSET = 0.0
 
-CURSOR_START = 0.85   # カーソル開始位置（右85%）
-CURSOR_END   = 0.15   # カーソル終了位置（左15%）
+CURSOR_X = 0.20       # カーソル固定位置（左20%）
 PPS = 100             # pixels per second
 
 NOTE_MIN = 36
@@ -119,8 +118,7 @@ total_frames = int(VIDEO_DURATION * FPS)
 
 for frame_idx in range(total_frames):
     current_time = frame_idx / FPS
-    progress = current_time / VIDEO_DURATION
-    cursor_x = int(FRAME_WIDTH * (CURSOR_START - progress * (CURSOR_START - CURSOR_END)))
+    cursor_x = int(FRAME_WIDTH * CURSOR_X)
 
     img = Image.new("RGBA", (FRAME_WIDTH, FRAME_HEIGHT), (0, 0, 0, 0))
     bg = Image.new("RGBA", (FRAME_WIDTH, FRAME_HEIGHT), (0, 0, 0, 102))
@@ -142,7 +140,7 @@ for frame_idx in range(total_frames):
 
         y_ratio = (note - NOTE_MIN) / NOTE_RANGE
         y_center = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12
-        h = 12
+        h = 20
 
         is_active = start_sec <= current_time <= end_sec
         color = pitch_color(note, is_active)
