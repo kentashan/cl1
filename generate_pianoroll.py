@@ -11,19 +11,20 @@ FPS = 30
 VIDEO_DURATION = 16.05
 FRAME_WIDTH = 786
 FRAME_HEIGHT = 200
-WINDOW_SECONDS = 3.0
-NOTE_OPACITY = 200
 TIME_OFFSET = 0.0
 
-NOTE_MIN = 36  # C2
-NOTE_MAX = 84  # C6
+CURSOR_START = 0.85   # カーソル開始位置（右85%）
+CURSOR_END   = 0.15   # カーソル終了位置（左15%）
+PPS = 100             # pixels per second
+
+NOTE_MIN = 36
+NOTE_MAX = 84
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 mid = mido.MidiFile(MIDI_FILE)
 ticks_per_beat = mid.ticks_per_beat
 
-# テンポマップ構築
 tempo_map = [(0, 500000)]
 for track in mid.tracks:
     abs_tick = 0
@@ -59,14 +60,11 @@ for track in mid.tracks:
                 notes.append((start_sec, end_sec, msg.note))
 
 print(f"Notes loaded: {len(notes)}")
-
 NOTE_RANGE = NOTE_MAX - NOTE_MIN
 
-def note_color(note, is_active, opacity):
-    """ピッチに応じた虹色。アクティブ時は明るく・彩度高め"""
-    ratio = (note - NOTE_MIN) / NOTE_RANGE  # 0.0(低音) → 1.0(高音)
-    # 虹色: 低音=赤, 中音=緑/シアン, 高音=紫
-    hue = ratio * 270  # 0=赤, 120=緑, 240=青, 270=紫
+def pitch_color(note, is_active):
+    ratio = (note - NOTE_MIN) / NOTE_RANGE
+    hue = ratio * 270
     h = hue / 60.0
     i = int(h)
     f = h - i
@@ -76,106 +74,101 @@ def note_color(note, is_active, opacity):
     elif i == 3: r, g, b = 0, int(255*(1-f)), 255
     elif i == 4: r, g, b = int(255*f), 0, 255
     else:        r, g, b = 255, 0, int(255*(1-f))
-
     if is_active:
-        # 白に近づける（明るく）
-        r = min(255, r + 80)
-        g = min(255, g + 80)
-        b = min(255, b + 80)
-        opacity = min(255, opacity + 55)
+        r = min(255, r + 70)
+        g = min(255, g + 70)
+        b = min(255, b + 70)
+        return (r, g, b, 240)
+    return (r, g, b, 180)
 
-    return (r, g, b, opacity)
-
-def draw_glow(draw, x1, y2, x2, y1, color, layers=3):
-    """ノートの周囲にグロー（発光）エフェクトを描画"""
-    r, g, b, a = color
-    for i in range(layers, 0, -1):
-        pad = i * 3
-        glow_alpha = max(0, a // (layers + 1) * i // layers)
-        draw.rectangle(
-            [x1 - pad, y2 - pad, x2 + pad, y1 + pad],
-            fill=(r, g, b, glow_alpha)
-        )
-
-def draw_sparkles(draw, cx, cy, color, seed, count=5):
-    """カーソル付近にキラキラ（スパークル）を描画"""
+def draw_sparks(draw, cx, cy, color, time_since_hit, note_seed):
+    """音符がカーソルに当たった瞬間の火花エフェクト"""
+    SPARK_DURATION = 0.18  # 火花の持続時間（秒）
+    if time_since_hit < 0 or time_since_hit > SPARK_DURATION:
+        return
     r, g, b, _ = color
-    rng = random.Random(seed)
-    for _ in range(count):
-        sx = cx + rng.randint(-12, 12)
-        sy = cy + rng.randint(-20, 20)
-        size = rng.randint(1, 3)
-        alpha = rng.randint(120, 220)
-        draw.ellipse([sx-size, sy-size, sx+size, sy+size], fill=(r, g, b, alpha))
-        # 十字スパークル
-        draw.line([(sx-size*2, sy), (sx+size*2, sy)], fill=(255,255,255,alpha//2), width=1)
-        draw.line([(sx, sy-size*2), (sx, sy+size*2)], fill=(255,255,255,alpha//2), width=1)
+    progress = time_since_hit / SPARK_DURATION  # 0→1（消えていく）
+    rng = random.Random(note_seed)
+
+    # 火花: 外側に広がる小さな点
+    for _ in range(12):
+        angle = rng.uniform(0, 2 * math.pi)
+        speed = rng.uniform(25, 65)
+        dist = speed * time_since_hit
+        sx = cx + int(dist * math.cos(angle))
+        sy = cy + int(dist * math.sin(angle))
+        size = max(1, int(3.5 * (1 - progress)))
+        alpha = int(220 * (1 - progress))
+
+        # ランダムに白か音符色の火花
+        if rng.random() > 0.4:
+            fc = (min(255,r+80), min(255,g+80), min(255,b+80), alpha)
+        else:
+            fc = (255, 255, 200, alpha)
+
+        draw.ellipse([sx-size, sy-size, sx+size, sy+size], fill=fc)
+
+    # 中心に明るいフラッシュ（ヒット直後だけ）
+    if progress < 0.3:
+        flash_r = int(10 * (0.3 - progress) / 0.3)
+        flash_a = int(180 * (1 - progress / 0.3))
+        draw.ellipse([cx-flash_r, cy-flash_r, cx+flash_r, cy+flash_r],
+                     fill=(255, 255, 255, flash_a))
 
 total_frames = int(VIDEO_DURATION * FPS)
 
 for frame_idx in range(total_frames):
     current_time = frame_idx / FPS
-    window_start = current_time - WINDOW_SECONDS * 0.3
-    window_end   = current_time + WINDOW_SECONDS * 0.7
+    progress = current_time / VIDEO_DURATION
+    cursor_x = int(FRAME_WIDTH * (CURSOR_START - progress * (CURSOR_START - CURSOR_END)))
 
     img = Image.new("RGBA", (FRAME_WIDTH, FRAME_HEIGHT), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-
-    # 背景: 60%透過の黒（alpha = 255 * 0.4 = 102）
     bg = Image.new("RGBA", (FRAME_WIDTH, FRAME_HEIGHT), (0, 0, 0, 102))
     img = Image.alpha_composite(img, bg)
     draw = ImageDraw.Draw(img)
 
-    cursor_x = int(FRAME_WIDTH * 0.3)
+    spark_queue = []  # (cx, cy, color, time_since_hit, seed)
 
-    # アクティブなノートを収集（スパークル用）
-    active_notes_at_cursor = []
     for start_sec, end_sec, note in notes:
-        if start_sec <= current_time <= end_sec and NOTE_MIN <= note <= NOTE_MAX:
-            active_notes_at_cursor.append(note)
+        if note < NOTE_MIN or note > NOTE_MAX:
+            continue
 
-    # グロー → 通常ノートの順で描画
-    for pass_num in range(2):  # 0=グロー, 1=本体
-        for start_sec, end_sec, note in notes:
-            if end_sec < window_start or start_sec > window_end:
-                continue
-            if note < NOTE_MIN or note > NOTE_MAX:
-                continue
+        x1 = cursor_x + int((start_sec - current_time) * PPS)
+        x2 = cursor_x + int((end_sec   - current_time) * PPS)
+        x2 = max(x2, x1 + 3)
 
-            x1 = int((start_sec - window_start) / (window_end - window_start) * FRAME_WIDTH)
-            x2 = int((end_sec   - window_start) / (window_end - window_start) * FRAME_WIDTH)
-            x2 = max(x2, x1 + 4)
+        if x2 < 0 or x1 > FRAME_WIDTH:
+            continue
 
-            y_ratio = (note - NOTE_MIN) / NOTE_RANGE
-            y1 = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12
-            y2 = y1 - 14
-
-            is_active = start_sec <= current_time <= end_sec
-            color = note_color(note, is_active, NOTE_OPACITY)
-
-            if pass_num == 0 and is_active:
-                draw_glow(draw, x1, y2, x2, y1, color, layers=3)
-            elif pass_num == 1:
-                # アクティブ時は少し大きく
-                if is_active:
-                    draw.rectangle([x1-1, y2-2, x2+1, y1+2], fill=color)
-                else:
-                    draw.rectangle([x1, y2, x2, y1], fill=color)
-
-    # カーソル線（グロー付き）
-    for w, a in [(6, 30), (3, 70), (2, 180)]:
-        draw.line([(cursor_x, 0), (cursor_x, FRAME_HEIGHT)], fill=(255, 255, 255, a), width=w)
-
-    # スパークル（アクティブノートがある場合）
-    for note in active_notes_at_cursor:
         y_ratio = (note - NOTE_MIN) / NOTE_RANGE
-        note_y = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12 - 7
-        color = note_color(note, True, 255)
-        seed = frame_idx * 100 + note
-        draw_sparkles(draw, cursor_x, note_y, color, seed, count=4)
+        y_center = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12
+        h = 12
+
+        is_active = start_sec <= current_time <= end_sec
+        color = pitch_color(note, is_active)
+
+        # アクティブ時: 薄いグロー
+        if is_active:
+            r, g, b, _ = color
+            draw.rectangle([x1-2, y_center-h//2-2, x2+2, y_center+h//2+2],
+                           fill=(r, g, b, 55))
+
+        draw.rectangle([x1, y_center-h//2, x2, y_center+h//2], fill=color)
+
+        # 火花: ヒット直後（SPARK_DURATION秒以内）
+        time_since_hit = current_time - start_sec
+        if 0 <= time_since_hit <= 0.18:
+            spark_queue.append((cursor_x, y_center, color, time_since_hit, int(note * 1000 + start_sec * 100)))
+
+    # カーソル線
+    draw.line([(cursor_x, 0), (cursor_x, FRAME_HEIGHT)], fill=(255,255,255,40), width=5)
+    draw.line([(cursor_x, 0), (cursor_x, FRAME_HEIGHT)], fill=(255,255,255,200), width=2)
+
+    # 火花を最前面に描画
+    for cx, cy, color, time_since_hit, seed in spark_queue:
+        draw_sparks(draw, cx, cy, color, time_since_hit, seed)
 
     img.save(f"{OUTPUT_DIR}/frame_{frame_idx:05d}.png")
-
     if frame_idx % 100 == 0:
         print(f"  {frame_idx}/{total_frames}")
 
