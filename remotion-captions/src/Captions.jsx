@@ -20,7 +20,8 @@ const IMAGES = [
 ];
 
 const CAPTIONS = [
-  { start: 0.00, end: 4.06, text: "二人の冬" },
+  { start: 0.00, end: 1.24, text: "白い雪" },
+  { start: 2.32, end: 3.94, text: "二人の冬" },
   { start: 5.14, end: 6.62, text: "肩と肩" },
   { start: 6.90, end: 9.98, text: "触れたままで" },
   { start: 10.28, end: 12.68, text: "寒いねと" },
