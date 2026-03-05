@@ -140,7 +140,7 @@ for frame_idx in range(total_frames):
 
         y_ratio = (note - NOTE_MIN) / NOTE_RANGE
         y_center = int((1.0 - y_ratio) * (FRAME_HEIGHT - 24)) + 12
-        h = 80
+        h = 20
 
         is_active = start_sec <= current_time <= end_sec
         color = pitch_color(note, is_active)
