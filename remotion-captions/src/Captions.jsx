@@ -105,6 +105,7 @@ export const CaptionVideo = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            paddingTop: 120,
           }}
         >
           <div
