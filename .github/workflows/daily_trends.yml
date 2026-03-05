@@ -1,9 +1,9 @@
-name: Daily Japan Trends
+name: Hourly Japan Trends
 
 on:
   schedule:
-    # 毎日 JST 12:25 (UTC 00:00) に実行
-    - cron: "0 0 * * *"
+    # 毎時 0 分に実行 (UTC)
+    - cron: "0 * * * *"
   workflow_dispatch:  # 手動実行も可能
 
 permissions:
@@ -31,6 +31,12 @@ jobs:
         id: fetch
         run: python fetch_trends.py
 
+      - name: Push trends to Notion
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python notion_push.py
+
       - name: Commit and push updated trends
         run: |
           git config user.name  "github-actions[bot]"
@@ -39,6 +45,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: update Japan trends $(date -u '+%Y-%m-%d')"
+            git commit -m "chore: update Japan trends $(date -u '+%Y-%m-%dT%H:%M')"
             git push
           fi
