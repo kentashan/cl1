@@ -145,13 +145,29 @@ for frame_idx in range(total_frames):
         is_active = start_sec <= current_time <= end_sec
         color = pitch_color(note, is_active)
 
-        # アクティブ時: 薄いグロー
-        if is_active:
-            r, g, b, _ = color
-            draw.rectangle([x1-2, y_center-h//2-2, x2+2, y_center+h//2+2],
-                           fill=(r, g, b, 55))
+        r, g, b, a = color
+        rad = h // 2  # 角丸半径（完全な楕円形=pill shape）
 
-        draw.rectangle([x1, y_center-h//2, x2, y_center+h//2], fill=color)
+        # 1. 外側ソフトグロー（大きめ・低透過）
+        glow_a = 35 if not is_active else 60
+        draw.rounded_rectangle([x1-4, y_center-h//2-4, x2+4, y_center+h//2+4],
+                                radius=rad+4, fill=(r, g, b, glow_a))
+
+        # 2. 本体（角丸）
+        draw.rounded_rectangle([x1, y_center-h//2, x2, y_center+h//2],
+                                radius=rad, fill=(r, g, b, a))
+
+        # 3. 上半分ハイライト（白っぽい光沢）
+        highlight_a = 60 if not is_active else 90
+        mid_y = y_center - h // 2
+        draw.rounded_rectangle([x1+2, mid_y+2, x2-2, y_center],
+                                radius=max(1, rad-2),
+                                fill=(min(255,r+100), min(255,g+100), min(255,b+100), highlight_a))
+
+        # 4. 左端（先頭）ブライトエッジ
+        edge_w = min(6, max(2, (x2-x1)//4))
+        draw.rounded_rectangle([x1, y_center-h//2, x1+edge_w, y_center+h//2],
+                                radius=rad, fill=(min(255,r+120), min(255,g+120), min(255,b+120), a))
 
         # 火花: ヒット直後（SPARK_DURATION秒以内）
         time_since_hit = current_time - start_sec
