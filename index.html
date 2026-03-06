@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cl1 - Japan Trends Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #f78166;
+      --accent3: #56d364;
+      --card-hover: #1c2230;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    header .tagline {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Main layout */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #79c0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .badge.blue { border-color: var(--accent); color: var(--accent); }
+    .badge.green { border-color: var(--accent3); color: var(--accent3); }
+    .badge.red { border-color: var(--accent2); color: var(--accent2); }
+
+    /* Tool grid */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .tool-card:hover {
+      background: var(--card-hover);
+      border-color: var(--accent);
+    }
+
+    .tool-card .icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .tool-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .tool-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .tool-card .file-tag {
+      display: inline-block;
+      background: #1f2937;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--accent);
+    }
+
+    /* Trends panel */
+    .trends-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2.5rem;
+    }
+
+    .trends-panel .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .panel-header .updated {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    #trends-list {
+      padding: 1rem 1.5rem;
+      min-height: 60px;
+    }
+
+    .trend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .trend-item:last-child { border-bottom: none; }
+
+    .trend-rank {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-family: monospace;
+      min-width: 1.8rem;
+      text-align: right;
+    }
+
+    .trend-query {
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .trend-traffic {
+      font-size: 0.8rem;
+      color: var(--accent3);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    .no-data {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+
+    /* Workflow info */
+    .workflow-info {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .workflow-info .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent3);
+      flex-shrink: 0;
+      box-shadow: 0 0 6px var(--accent3);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .workflow-info p { font-size: 0.9rem; color: var(--muted); }
+    .workflow-info strong { color: var(--text); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.75rem; }
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">cl1</span>
+  <span class="tagline">Japan Google Trends &amp; Music Analysis</span>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Japan Trends Dashboard</h1>
+    <p>日本のGoogle検索トレンドを毎日自動取得し、音楽・カラオケ市場の分析とWEB広告提案を自動生成するツール群。</p>
+    <div class="badge-row">
+      <span class="badge blue">Python 3.12</span>
+      <span class="badge green">GitHub Actions</span>
+      <span class="badge red">Claude AI</span>
+      <span class="badge">Google Trends API</span>
+      <span class="badge">Notion</span>
+    </div>
+  </section>
+
+  <!-- CI Status -->
+  <div class="workflow-info">
+    <div class="dot"></div>
+    <p><strong>自動実行中</strong> — 毎日 UTC 00:00（JST 09:00）にGoogle Trendsを取得、15分ごとに音楽トレンド分析を実行します。</p>
+  </div>
+
+  <!-- Latest Trends -->
+  <p class="section-title">本日のJapan Googleトレンド</p>
+  <div class="trends-panel">
+    <div class="panel-header">
+      <h2>Trending Searches (JP)</h2>
+      <span class="updated" id="updated-at">読み込み中...</span>
+    </div>
+    <div id="trends-list">
+      <p class="no-data">データを読み込んでいます...</p>
+    </div>
+  </div>
+
+  <!-- Tools -->
+  <p class="section-title">ツール一覧</p>
+  <div class="tool-grid">
+    <div class="tool-card">
+      <div class="icon">🎵</div>
+      <h3>音楽・カラオケトレンド分析</h3>
+      <p>Google TrendsからJapanの音楽・カラオケ関連キーワードを収集し、Claude AIで流行分析・WEB広告キーワード・ターゲティング案を自動生成します。</p>
+      <span class="file-tag">music_karaoke_analyzer.py</span>
+    </div>
+
+    <div class="tool-card">
+      <div class="icon">📈</div>
+      <h3>Japan Googleトレンドフェッチャー</h3>
+      <p>毎日の日本のGoogle検索トレンドを取得し、30日分の履歴をJSONで保持します。GitHub Actionsで完全自動化。</p>
+      <span class="file-tag">fetch_trends.py</span>
+    </div>
+
+    <div class="tool-card">
+      <div class="icon">🐙</div>
+      <h3>GitHubトレンドチェッカー</h3>
+      <p>GitHubのトレンドリポジトリを確認するツール。日次・週次・月次の絞り込みや言語フィルタに対応。</p>
+      <span class="file-tag">trend_checker.py</span>
+    </div>
+
+    <div class="tool-card">
+      <div class="icon">📝</div>
+      <h3>Notion連携</h3>
+      <p>分析結果をNotionデータベースへ自動プッシュ。トレンドデータや広告提案をチームで共有・管理できます。</p>
+      <span class="file-tag">notion_push.py</span>
+    </div>
+
+    <div class="tool-card">
+      <div class="icon">🎹</div>
+      <h3>Piano Roll & MIDI生成</h3>
+      <p>音声からMIDIへの変換、ピアノロール画像の生成、カラオケ動画の制作を自動化するツール群。</p>
+      <span class="file-tag">audio_to_midi.py</span>
+    </div>
+
+    <div class="tool-card">
+      <div class="icon">🎬</div>
+      <h3>動画・字幕生成</h3>
+      <p>RemotionとASS字幕ファイルを使ったカラオケ動画の自動生成。音楽トレンドコンテンツの制作を効率化。</p>
+      <span class="file-tag">make_video.py</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>Built with <a href="https://github.com/kentashan/cl1" target="_blank" rel="noopener">cl1</a> &mdash; Powered by Google Trends &amp; Claude AI</p>
+</footer>
+
+<script>
+  // Load trends.json and render today's or latest available trends
+  async function loadTrends() {
+    const listEl = document.getElementById('trends-list');
+    const updatedEl = document.getElementById('updated-at');
+
+    try {
+      const res = await fetch('trends.json');
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+
+      if (data.updated_at) {
+        const d = new Date(data.updated_at);
+        updatedEl.textContent = '更新: ' + d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      } else {
+        updatedEl.textContent = '';
+      }
+
+      const history = data.history || {};
+      const dates = Object.keys(history).sort().reverse();
+
+      // Find first date with actual trend array
+      let trends = null;
+      let usedDate = null;
+      for (const date of dates) {
+        const entry = history[date];
+        if (Array.isArray(entry) && entry.length > 0) {
+          trends = entry;
+          usedDate = date;
+          break;
+        }
+      }
+
+      if (!trends) {
+        listEl.innerHTML = '<p class="no-data">現在トレンドデータがありません。Google Trendsが一時的にブロックされている可能性があります。</p>';
+        return;
+      }
+
+      const top = trends.slice(0, 20);
+      listEl.innerHTML = top.map(item => `
+        <div class="trend-item">
+          <span class="trend-rank">${String(item.rank).padStart(2, '0')}</span>
+          <span class="trend-query">${escHtml(item.query)}</span>
+          <span class="trend-traffic">${escHtml(item.traffic)}</span>
+        </div>
+      `).join('');
+    } catch (e) {
+      document.getElementById('updated-at').textContent = '';
+      listEl.innerHTML = '<p class="no-data">trends.json の読み込みに失敗しました。</p>';
+    }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  loadTrends();
+</script>
+
+</body>
+</html>
