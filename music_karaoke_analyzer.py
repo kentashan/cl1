@@ -12,9 +12,10 @@ Required environment variable:
 
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
+
+import xml.etree.ElementTree as ET
 
 import anthropic
 import requests
@@ -49,11 +50,13 @@ MUSIC_KARAOKE_KEYWORDS = [
     "アイドル", "ガールズグループ", "ボーイズグループ",
 ]
 
-TRENDING_URL = "https://trends.google.com/trends/api/dailytrends"
+TRENDING_RSS_URL = "https://trends.google.com/trending/rss?geo=JP"
 OUTPUT_FILE = "music_trends_analysis.json"
 
-_XSSI_PREFIX_RE = re.compile(r"^\)\]\}'[^\n]*\n")
 _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+
+
+_RSS_NS = {"ht": "https://trends.google.com/trending/rss"}
 
 
 def _is_retryable(exc: BaseException) -> bool:
@@ -72,30 +75,14 @@ def _is_retryable(exc: BaseException) -> bool:
     stop=stop_after_attempt(4),
     reraise=True,
 )
-def _get_with_retry(url: str, params: dict, headers: dict) -> requests.Response:
-    response = requests.get(url, params=params, headers=headers, timeout=30)
+def _get_with_retry(url: str, headers: dict) -> requests.Response:
+    response = requests.get(url, headers=headers, timeout=30)
     response.raise_for_status()
     return response
 
 
-def _strip_xssi(raw: str) -> str:
-    stripped = _XSSI_PREFIX_RE.sub("", raw, count=1)
-    if stripped != raw:
-        return stripped
-    newline_pos = raw.find("\n")
-    if newline_pos != -1:
-        return raw[newline_pos + 1:]
-    return raw
-
-
 def fetch_all_japan_trends() -> list[dict] | None:
-    """日本のGoogle Trendsを全件取得する。"""
-    params = {
-        "hl": "ja",
-        "tz": "-540",
-        "geo": "JP",
-        "ns": "15",
-    }
+    """日本のGoogle Trends RSSから全件取得する。"""
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (X11; Linux x86_64) "
@@ -105,7 +92,7 @@ def fetch_all_japan_trends() -> list[dict] | None:
     }
 
     try:
-        response = _get_with_retry(TRENDING_URL, params, headers)
+        response = _get_with_retry(TRENDING_RSS_URL, headers)
     except requests.exceptions.HTTPError as exc:
         status = exc.response.status_code if exc.response is not None else "unknown"
         print(
@@ -118,41 +105,36 @@ def fetch_all_japan_trends() -> list[dict] | None:
         return None
 
     try:
-        json_body = _strip_xssi(response.text)
-        data = json.loads(json_body)
-    except (ValueError, json.JSONDecodeError) as exc:
-        print(f"WARNING: Failed to parse response: {exc}", file=sys.stderr)
-        return None
-
-    try:
-        trending_searches = data["default"]["trendingSearchesDays"]
-    except (KeyError, TypeError) as exc:
-        print(f"WARNING: Unexpected JSON structure: {exc}", file=sys.stderr)
+        root = ET.fromstring(response.text)
+    except ET.ParseError as exc:
+        print(f"WARNING: Failed to parse RSS: {exc}", file=sys.stderr)
         return None
 
     results = []
-    for day in trending_searches:
-        date_str = day["date"]
-        for item in day["trendingSearches"]:
-            title = item["title"]["query"]
-            traffic = item.get("formattedTraffic", "N/A")
-            articles = [
-                {
-                    "title": a.get("title", ""),
-                    "url": a.get("url", ""),
-                    "source": a.get("source", ""),
-                }
-                for a in item.get("articles", [])[:3]
-            ]
-            results.append(
-                {
-                    "date": date_str,
-                    "rank": len(results) + 1,
-                    "query": title,
-                    "traffic": traffic,
-                    "articles": articles,
-                }
-            )
+    for rank, item in enumerate(root.findall(".//item"), start=1):
+        title = item.findtext("title", "")
+        pub_date = item.findtext("pubDate", "")
+        traffic = item.findtext("ht:approx_traffic", "", _RSS_NS)
+
+        news_items = item.findall("ht:news_item", _RSS_NS)
+        articles = [
+            {
+                "title": n.findtext("ht:news_item_title", "", _RSS_NS),
+                "url": n.findtext("ht:news_item_url", "", _RSS_NS),
+                "source": n.findtext("ht:news_item_source", "", _RSS_NS),
+            }
+            for n in news_items[:3]
+        ]
+
+        results.append(
+            {
+                "date": pub_date,
+                "rank": rank,
+                "query": title,
+                "traffic": traffic,
+                "articles": articles,
+            }
+        )
 
     return results
 
