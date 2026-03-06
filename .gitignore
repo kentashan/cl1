@@ -1,0 +1,8 @@
+*.mp4
+*.mp3
+*.wav
+__pycache__/
+*.pyc
+node_modules/
+frame_*.png
+pianoroll_frames/
