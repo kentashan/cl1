@@ -1,6 +1,36 @@
 # cl1
 
-GitHubのトレンドリポジトリを確認するツールです。
+GitHubのトレンドリポジトリを確認するツールと、音楽・カラオケトレンドをClaudeで分析してWEB広告提案を生成するツールです。
+
+## 音楽・カラオケトレンド分析（メイン機能）
+
+`music_karaoke_analyzer.py` を使って、Google Trendsから日本の音楽・カラオケ関連トレンドを収集し、Claude AIで分析・WEB広告活用提案を自動生成します。
+
+**GitHub Actionsで15分ごとに自動実行されます。**
+
+### 必要な環境変数（GitHub Secrets）
+
+| シークレット名 | 説明 |
+|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API キー |
+
+### 手動実行
+
+```bash
+export ANTHROPIC_API_KEY=your_api_key_here
+python music_karaoke_analyzer.py
+```
+
+### 出力ファイル
+
+`music_trends_analysis.json` に以下の情報が保存されます：
+
+- 収集した音楽・カラオケ関連トレンド一覧
+- Claudeによる流行分析（背景・ユーザー層）
+- WEB広告キーワード・ターゲティング・コピー案
+- カラオケビジネスへの具体的アクション提案
+
+---
 
 ## トレンドの確認方法
 
