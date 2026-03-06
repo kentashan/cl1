@@ -296,9 +296,11 @@ def push_music_analysis_to_notion(record: dict) -> None:
         return
 
     fetched_dt = datetime.fromisoformat(record["fetched_at"])
-    jst_label = (fetched_dt.strftime("%Y-%m-%d %H:%M"))
+    from datetime import timedelta
+    jst_dt = fetched_dt + timedelta(hours=9)
+    jst_label = jst_dt.strftime("%Y-%m-%d %H:%M JST")
     page_title = f"音楽・カラオケトレンド分析 {jst_label}"
-    iso_date = fetched_dt.strftime("%Y-%m-%d")
+    iso_date = jst_dt.strftime("%Y-%m-%d")
     traffic_label = (
         f"音楽{record['music_trends_count']}件検出"
         if record["music_trends_count"] > 0
@@ -326,6 +328,19 @@ def push_music_analysis_to_notion(record: dict) -> None:
 
     # ページ本文ブロック
     blocks: list[dict] = []
+
+    # --- 更新日時 ---
+    blocks.append({
+        "object": "block",
+        "type": "callout",
+        "callout": {
+            "rich_text": [{"type": "text", "text": {
+                "content": f"収集日時: {jst_label}  |  モデル: {record.get('model', 'claude-sonnet-4-6')}  |  トークン: {record.get('tokens', {}).get('input', 0)} in / {record.get('tokens', {}).get('output', 0)} out"
+            }}],
+            "icon": {"emoji": "📅"},
+            "color": "gray_background",
+        },
+    })
 
     # --- 検出トレンド一覧 ---
     blocks.append({
