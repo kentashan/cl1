@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-06T17:21:05.675312+00:00",
+  "updated_at": "2026-03-06T17:58:10.397691+00:00",
   "history": [
     {
       "fetched_at": "2026-03-06T03:07:11.558417+00:00",
@@ -98,6 +98,11 @@
     },
     {
       "fetched_at": "2026-03-06T17:21:05.675312+00:00",
+      "fetch_failed": true,
+      "reason": "blocked_or_network_error"
+    },
+    {
+      "fetched_at": "2026-03-06T17:58:10.397691+00:00",
       "fetch_failed": true,
       "reason": "blocked_or_network_error"
     }
