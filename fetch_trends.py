@@ -6,8 +6,8 @@ Fetches trending searches in Japan and saves results as JSON.
 
 import json
 import os
-import re
 import sys
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 import requests
@@ -18,20 +18,14 @@ from tenacity import (
     wait_exponential,
 )
 
-JST = timezone.utc  # stored as UTC, displayed note says JST+9
-
 OUTPUT_FILE = "trends.json"
-TRENDING_URL = "https://trends.google.com/trends/api/dailytrends"
+TRENDING_RSS_URL = "https://trends.google.com/trending/rss?geo=JP"
 
-# HTTP status codes that are worth retrying (rate-limited or server-side flap)
 _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
-
-# Matches any variant of Google's XSSI protection prefix up to the first newline
-_XSSI_PREFIX_RE = re.compile(r"^\)\]\}'[^\n]*\n")
+_RSS_NS = {"ht": "https://trends.google.com/trending/rss"}
 
 
 def _is_retryable(exc: BaseException) -> bool:
-    """Return True for network errors or retryable HTTP status codes."""
     if isinstance(exc, requests.exceptions.ConnectionError):
         return True
     if isinstance(exc, requests.exceptions.Timeout):
@@ -47,45 +41,18 @@ def _is_retryable(exc: BaseException) -> bool:
     stop=stop_after_attempt(4),
     reraise=True,
 )
-def _get_with_retry(url: str, params: dict, headers: dict) -> requests.Response:
-    """Perform a GET request; retries on network errors and 429/5xx responses."""
-    response = requests.get(url, params=params, headers=headers, timeout=30)
+def _get_with_retry(url: str, headers: dict) -> requests.Response:
+    response = requests.get(url, headers=headers, timeout=30)
     response.raise_for_status()
     return response
 
 
-def _strip_xssi(raw: str) -> str:
-    """
-    Strip Google's XSSI prefix from the response body.
-
-    Google Trends prepends )]}',\n to prevent JSON hijacking.
-    This strips that prefix robustly regardless of exact whitespace variant.
-    Falls back to a newline-based split for backwards compatibility.
-    """
-    stripped = _XSSI_PREFIX_RE.sub("", raw, count=1)
-    if stripped != raw:
-        return stripped
-    # Fallback: find first newline (original approach, but safe with find())
-    newline_pos = raw.find("\n")
-    if newline_pos != -1:
-        return raw[newline_pos + 1:]
-    # No prefix found at all - return as-is and let json.loads surface the error
-    return raw
-
-
 def fetch_japan_trends() -> list[dict] | None:
     """
-    Fetch daily trending searches for Japan (geo=JP).
+    Fetch trending searches for Japan via RSS feed (geo=JP).
 
-    Returns a list of trend dicts on success, or None if Google is
-    blocking requests (403/429 after all retries exhausted).
+    Returns a list of trend dicts on success, or None on failure.
     """
-    params = {
-        "hl": "ja",
-        "tz": "-540",  # JST = UTC+9
-        "geo": "JP",
-        "ns": "15",
-    }
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (X11; Linux x86_64) "
@@ -95,66 +62,47 @@ def fetch_japan_trends() -> list[dict] | None:
     }
 
     try:
-        response = _get_with_retry(TRENDING_URL, params, headers)
+        response = _get_with_retry(TRENDING_RSS_URL, headers)
     except requests.exceptions.HTTPError as exc:
         status = exc.response.status_code if exc.response is not None else "unknown"
         print(
-            f"WARNING: Google Trends returned HTTP {status} after all retries. "
-            "This is expected when running from GitHub Actions IPs. Skipping fetch.",
+            f"WARNING: Google Trends RSS returned HTTP {status} after all retries.",
             file=sys.stderr,
         )
         return None
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as exc:
-        print(
-            f"WARNING: Network error fetching Google Trends after all retries: {exc}",
-            file=sys.stderr,
-        )
+        print(f"WARNING: Network error fetching Google Trends RSS: {exc}", file=sys.stderr)
         return None
 
     try:
-        json_body = _strip_xssi(response.text)
-        data = json.loads(json_body)
-    except (ValueError, json.JSONDecodeError) as exc:
-        print(
-            f"WARNING: Failed to parse Google Trends response: {exc}\n"
-            f"Response preview: {response.text[:200]!r}",
-            file=sys.stderr,
-        )
+        root = ET.fromstring(response.text)
+    except ET.ParseError as exc:
+        print(f"WARNING: Failed to parse RSS: {exc}", file=sys.stderr)
         return None
 
-    try:
-        trending_searches = data["default"]["trendingSearchesDays"]
-    except (KeyError, TypeError) as exc:
-        print(
-            f"WARNING: Unexpected JSON structure from Google Trends: {exc}\n"
-            f"Top-level keys: {list(data.keys()) if isinstance(data, dict) else type(data)}",
-            file=sys.stderr,
-        )
-        return None
-
+    today = datetime.now(tz=timezone.utc).strftime("%Y%m%d")
     results = []
-    for day in trending_searches:
-        date_str = day["date"]  # e.g. "20240301"
-        for item in day["trendingSearches"]:
-            title = item["title"]["query"]
-            traffic = item.get("formattedTraffic", "N/A")
-            articles = [
-                {
-                    "title": a.get("title", ""),
-                    "url": a.get("url", ""),
-                    "source": a.get("source", ""),
-                }
-                for a in item.get("articles", [])[:3]
-            ]
-            results.append(
-                {
-                    "date": date_str,
-                    "rank": len(results) + 1,
-                    "query": title,
-                    "traffic": traffic,
-                    "articles": articles,
-                }
-            )
+    for rank, item in enumerate(root.findall(".//item"), start=1):
+        title = item.findtext("title", "")
+        traffic = item.findtext("ht:approx_traffic", "", _RSS_NS)
+        news_items = item.findall("ht:news_item", _RSS_NS)
+        articles = [
+            {
+                "title": n.findtext("ht:news_item_title", "", _RSS_NS),
+                "url": n.findtext("ht:news_item_url", "", _RSS_NS),
+                "source": n.findtext("ht:news_item_source", "", _RSS_NS),
+            }
+            for n in news_items[:3]
+        ]
+        results.append(
+            {
+                "date": today,
+                "rank": rank,
+                "query": title,
+                "traffic": traffic,
+                "articles": articles,
+            }
+        )
 
     return results
 

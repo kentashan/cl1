@@ -1,9 +1,225 @@
 {
-  "updated_at": "2026-03-05T23:50:43.142483+00:00",
+  "updated_at": "2026-03-06T03:15:03.835531+00:00",
   "history": {
     "2026-03-05": {
       "fetch_failed": true,
       "reason": "blocked_or_network_error"
-    }
+    },
+    "2026-03-06": [
+      {
+        "date": "20260306",
+        "rank": 1,
+        "query": "デンソー",
+        "traffic": "100+",
+        "articles": [
+          {
+            "title": "デンソーがロームに買収提案 1.3兆円規模、パワー半導体の再編主導",
+            "url": "https://www.nikkei.com/article/DGXZQOFD06B7V0W6A200C2000000/",
+            "source": "日本経済新聞"
+          },
+          {
+            "title": "デンソー、CFP算定アプリがABtCの認証取得 日欧のデータ連携基盤に接続",
+            "url": "https://www.netdenjd.com/archives/648075",
+            "source": "日刊自動車新聞"
+          },
+          {
+            "title": "【アナリスト予想】デンソー、26年3月期経常予想。対前週3%下降。(アイフィス株予報)",
+            "url": "https://finance.yahoo.co.jp/news/detail/82021cdea3e3aa1ae51a82ab90534d67c2d625ef",
+            "source": "Yahoo!ファイナンス"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 2,
+        "query": "キューバ",
+        "traffic": "100+",
+        "articles": [
+          {
+            "title": "トランプ氏 イラン軍事作戦後 キューバ対応に乗り出す考え示唆",
+            "url": "https://news.web.nhk/newsweb/na/na-k10015067951000",
+            "source": "NHKニュース"
+          },
+          {
+            "title": "トランプ大統領「キューバは時間の問題」経済制裁など圧力を強化 ベネズエラ暫定政権と外交関係の回復で合意",
+            "url": "https://news.yahoo.co.jp/articles/9788ccc2f2f59b5bf250cf0c6ab839c85c759e51",
+            "source": "Yahoo!ニュース"
+          },
+          {
+            "title": "イランの次はキューバ、「時間の問題」とトランプ氏",
+            "url": "https://jp.reuters.com/markets/commodities/DPUGNXFKE5IWJFL6LXBDJYBDR4-2026-03-05/",
+            "source": "Reuters"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 3,
+        "query": "ウィザーズ 対 ジャズ",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "【NBA試合速報】2026年3月6日（金） ワシントン・ウィザーズ vs ユタ・ジャズ",
+            "url": "https://www.47news.jp/13958039.html",
+            "source": "47NEWS"
+          },
+          {
+            "title": "【NBA試合速報】2026年3月5日（木） フィラデルフィア・セブンティシクサーズ vs ユタ・ジャズ",
+            "url": "https://news.livedoor.com/article/detail/30701032/",
+            "source": "ライブドアニュース"
+          },
+          {
+            "title": "【NBA試合速報】2026年3月6日（金） ワシントン・ウィザーズ vs ユタ・ジャズ",
+            "url": "https://sdaa.jp/article/49552",
+            "source": "SPORTS DATA and ARTICLE"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 4,
+        "query": "侍ジャパン サンリオ くじ",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "タイトーくじ 侍ジャパン×サンリオキャラクターズ ｜商品情報",
+            "url": "https://www.family.co.jp/goods/charakuji/7914058.html",
+            "source": "ファミリーマート"
+          },
+          {
+            "title": "野球日本代表「侍ジャパン」と「サンリオキャラクターズ」のコラボくじが登場！【タイトーくじ 侍ジャパン×サンリオキャラクターズ】",
+            "url": "https://prtimes.jp/main/html/rd/p/000000703.000041970.html",
+            "source": "PR TIMES"
+          },
+          {
+            "title": "「サンリオ×侍ジャパン」新作タイトーくじが素敵！ヘッドスライディングするポムポムプリンの抱き枕など、ユニフォーム姿の10人が可愛い（インサイド）",
+            "url": "https://news.yahoo.co.jp/articles/7e5b2bf9cd8b8449cf29a533b3801a077f5ae116",
+            "source": "Yahoo!ニュース"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 5,
+        "query": "102回目のプロポーズ",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "浅田美代子“桃子”『101回目のプロポーズ』続編に出演決定 35年に時を越え「夢にも思っていなかった！」【コメントあり】（オリコン）",
+            "url": "https://news.yahoo.co.jp/articles/3c9d26f72f705b87e6ba087ff484134bf67c9ea4",
+            "source": "Yahoo!ニュース"
+          },
+          {
+            "title": "“桃子”浅田美代子が帰ってくる！唐田えりか＆せいや出演ドラマ『102回目のプロポーズ』追加キャスト",
+            "url": "https://news.fod.fujitv.co.jp/article/10862",
+            "source": "FOD INFO"
+          },
+          {
+            "title": "浅田美代子が『102回目のプロポーズ』に出演！配信に先がけ『101回目のプロポーズ』地上波で第1話～3話を限定放送＆TVerで全話配信",
+            "url": "https://article.auone.jp/detail/1/5/9/239_9_r_20260306_1772754366812193",
+            "source": "au Webポータル"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 6,
+        "query": "マジック 対 マーベリックス",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "【NBA試合速報】2026年3月4日（水） サクラメント・キングス vs フェニックス・サンズ",
+            "url": "https://www.47news.jp/13948510.html",
+            "source": "47NEWS"
+          },
+          {
+            "title": "【NBA試合速報】2026年3月6日（金） オーランド・マジック vs ダラス・マーベリックス",
+            "url": "https://topics.smt.docomo.ne.jp/article/sdaa/sports/sdaa-sdaa.jp-article-49554",
+            "source": "ｄメニューニュース"
+          },
+          {
+            "title": "【NBA試合速報】2026年3月4日（水） オーランド・マジック vs ワシントン・ウィザーズ",
+            "url": "https://news.livedoor.com/article/detail/30693809/",
+            "source": "ライブドアニュース"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 7,
+        "query": "中村哲",
+        "traffic": "100+",
+        "articles": []
+      },
+      {
+        "date": "20260306",
+        "rank": 8,
+        "query": "二階俊博",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "読む政治：高市首相の「応援団」 高まる旧安倍派の存在感、再結集には温度差も",
+            "url": "https://mainichi.jp/articles/20260305/k00/00m/010/193000c",
+            "source": "毎日新聞"
+          },
+          {
+            "title": "自民 旧二階派が「研究会」立ち上げ（ABEMA TIMES）",
+            "url": "https://news.yahoo.co.jp/articles/82602ff59a1acacf09ae583865384058bdf7301d",
+            "source": "Yahoo!ニュース"
+          },
+          {
+            "title": "自民党・旧二階派が研究会発足 武田元総務相トップに",
+            "url": "https://www.47news.jp/13955908.html",
+            "source": "47NEWS"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 9,
+        "query": "デボちゃん",
+        "traffic": "500+",
+        "articles": [
+          {
+            "title": "「韓国で損壊された遺体37体発見」日本語で嫌韓を煽った登録者96万人のユーチューバー、検察に送致（中央日報日本語版）",
+            "url": "https://news.yahoo.co.jp/articles/6bccb043ca1eac77b6350b7c2efc4a7a2fd2a6c7",
+            "source": "Yahoo!ニュース"
+          },
+          {
+            "title": "中国巡るデマ動画を日本語で拡散疑い ユーチューバー書類送検 韓国",
+            "url": "https://mainichi.jp/articles/20260305/k00/00m/030/335000c",
+            "source": "毎日新聞"
+          },
+          {
+            "title": "「日本好き」で活動の韓国人YouTuber 虚偽事実を広めたとして現地警察が捜査→在宅起訴と報道",
+            "url": "https://article.auone.jp/detail/1/5/9/266_9_r_20260305_1772697042569157",
+            "source": "au Webポータル"
+          }
+        ]
+      },
+      {
+        "date": "20260306",
+        "rank": 10,
+        "query": "もち吉 もちだんご村",
+        "traffic": "200+",
+        "articles": [
+          {
+            "title": "「もち吉」直方市に新たな直売所オープン、元大関魁皇の浅香山親方が餅つきで祝う…カフェやうどん店も併設",
+            "url": "https://news.yahoo.co.jp/articles/fef254a983e36012a9a0f15d740e0e19f9f9546f",
+            "source": "Yahoo!ニュース"
+          },
+          {
+            "title": "「観光の場としても楽しんで…」 元大関魁皇の浅香山親方も登場 「もち吉」工場直売所がオープン",
+            "url": "https://newsdig.tbs.co.jp/articles/rkb/2508511?display=1",
+            "source": "TBS NEWS DIG"
+          },
+          {
+            "title": "もち吉の新しい直売所がオープン 新業態のカフェも営業！",
+            "url": "https://sasatto.jp/article/entry-9512.html",
+            "source": "福岡ふかぼりメディア ささっとー"
+          }
+        ]
+      }
+    ]
   }
 }
