@@ -1,11 +1,6 @@
 {
-  "updated_at": "2026-03-13T13:46:28.610147+00:00",
+  "updated_at": "2026-03-13T14:38:49.147943+00:00",
   "history": [
-    {
-      "fetched_at": "2026-03-11T19:50:35.998470+00:00",
-      "fetch_failed": true,
-      "reason": "blocked_or_network_error"
-    },
     {
       "fetched_at": "2026-03-11T20:28:08.352382+00:00",
       "fetch_failed": true,
@@ -248,6 +243,11 @@
     },
     {
       "fetched_at": "2026-03-13T13:46:28.610147+00:00",
+      "fetch_failed": true,
+      "reason": "blocked_or_network_error"
+    },
+    {
+      "fetched_at": "2026-03-13T14:38:49.147943+00:00",
       "fetch_failed": true,
       "reason": "blocked_or_network_error"
     }
